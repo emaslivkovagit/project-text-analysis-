@@ -1,0 +1,36 @@
+Pragmatic Patterns: Sentiment Analysis
+=====================================
+
+Average sentiment values for story and non-story texts:
+           asent_neg  asent_neu  asent_pos  asent_compound  polarity  subjectivity
+label                                                                             
+non-story   0.051910   0.562412   0.082117        0.085086  0.093827      0.492170
+story       0.054261   0.558300   0.079397        0.069625  0.087770      0.476215
+
+Pattern 1: Polarity
+-------------------
+Method: spacytextblob polarity score.
+Observation: Non-stories had a slightly higher average polarity score than stories (0.093827 vs. 0.087770). This means non-stories were a little more positive on average, but the difference was very small.
+Interpretation: Polarity is a weak pattern because both stories and non-stories can contain positive or negative language.
+
+Pattern 2: Subjectivity
+-----------------------
+Method: spacytextblob subjectivity score.
+Observation: Non-stories had a slightly higher average subjectivity score than stories (0.492170 vs. 0.476215). This suggests that many non-stories in the dataset are also opinion-based.
+Interpretation: This pattern did not support the expectation that stories would be more subjective. Reddit non-stories often include advice, opinions, and arguments, which also increases subjectivity.
+
+Pattern 3: Compound sentiment
+-----------------------------
+Method: Asent compound sentiment score.
+Observation: Non-stories had a slightly higher average compound sentiment score than stories (0.085086 vs. 0.069625). Stories were not clearly more emotionally intense according to this score.
+Interpretation: Compound sentiment is also a weak pattern because some non-stories contain strong opinions, while some stories are written in a neutral style.
+
+Additional observation: Negative sentiment
+------------------------------------------
+Method: Asent negative sentiment score.
+Observation: Stories had a slightly higher average negative sentiment score than non-stories (0.054261 vs. 0.051910). This may reflect that some stories include problems, conflict, or difficult experiences.
+Interpretation: The difference is very small, so this is also not a strong rule by itself.
+
+Conclusion:
+-----------
+The pragmatic sentiment analysis showed only small differences between stories and non-stories. Stories had a slightly higher negative sentiment score, but non-stories had slightly higher polarity, compound sentiment, and subjectivity. This means that sentiment analysis alone is not a reliable way to distinguish stories from non-stories. However, it can still provide useful supporting evidence when combined with syntax and semantic features.

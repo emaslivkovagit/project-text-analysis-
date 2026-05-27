@@ -14,6 +14,8 @@ nlp.add_pipe("asent_en_v1")
 nlp.add_pipe("spacytextblob")
 
 
+# Find the main project folder.
+# This makes the file path work even if the script is run from another folder.
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_PATH = BASE_DIR / "dev data" / "dev.csv"
 
@@ -33,11 +35,14 @@ def analyze_sentiment(text):
     }
 
 
+# Run sentiment analysis for every text
 features = df["content"].apply(analyze_sentiment)
 features_df = pd.DataFrame(list(features))
 
+# Add the sentiment scores to the original dataframe
 df = pd.concat([df, features_df], axis=1)
 
+# Compare average sentiment values for story and non-story texts
 comparison = df.groupby("label")[
     [
         "asent_neg",
@@ -51,7 +56,11 @@ comparison = df.groupby("label")[
 
 print(comparison)
 
-with open("pragmatic_patterns.txt", "w", encoding="utf-8") as file:
+
+# Save the pattern report inside the main project folder
+OUTPUT_PATH = BASE_DIR / "pragmatic_patterns.txt"
+
+with open(OUTPUT_PATH, "w", encoding="utf-8") as file:
     file.write("Pragmatic Patterns: Sentiment Analysis\n")
     file.write("=====================================\n\n")
 
@@ -60,25 +69,67 @@ with open("pragmatic_patterns.txt", "w", encoding="utf-8") as file:
     file.write("\n\n")
 
     file.write("Pattern 1: Polarity\n")
+    file.write("-------------------\n")
     file.write("Method: spacytextblob polarity score.\n")
-    file.write("Observation: Compare whether stories and non-stories differ in positive or negative sentiment.\n\n")
-
-    file.write("Pattern 2: Subjectivity\n")
-    file.write("Method: spacytextblob subjectivity score.\n")
-    file.write("Observation: Compare whether stories are more subjective or personal than non-stories.\n\n")
-
-    file.write("Pattern 3: Compound sentiment\n")
-    file.write("Method: Asent compound sentiment score.\n")
-    file.write("Observation: Compare whether stories have stronger overall sentiment than non-stories.\n\n")
-
-    file.write("Conclusion:\n")
     file.write(
-        "Sentiment analysis can show pragmatic differences between stories and non-stories. "
-        "However, sentiment alone may not be enough, because some non-stories also contain opinions "
-        "and some stories may be written in a neutral style."
+        "Observation: Non-stories had a slightly higher average polarity score than stories "
+        "(0.093827 vs. 0.087770). This means non-stories were a little more positive on average, "
+        "but the difference was very small.\n"
+    )
+    file.write(
+        "Interpretation: Polarity is a weak pattern because both stories and non-stories can contain "
+        "positive or negative language.\n\n"
     )
 
-df.to_csv("pragmatic_sentiment_scores.csv", index=False)
+    file.write("Pattern 2: Subjectivity\n")
+    file.write("-----------------------\n")
+    file.write("Method: spacytextblob subjectivity score.\n")
+    file.write(
+        "Observation: Non-stories had a slightly higher average subjectivity score than stories "
+        "(0.492170 vs. 0.476215). This suggests that many non-stories in the dataset are also opinion-based.\n"
+    )
+    file.write(
+        "Interpretation: This pattern did not support the expectation that stories would be more subjective. "
+        "Reddit non-stories often include advice, opinions, and arguments, which also increases subjectivity.\n\n"
+    )
+
+    file.write("Pattern 3: Compound sentiment\n")
+    file.write("-----------------------------\n")
+    file.write("Method: Asent compound sentiment score.\n")
+    file.write(
+        "Observation: Non-stories had a slightly higher average compound sentiment score than stories "
+        "(0.085086 vs. 0.069625). Stories were not clearly more emotionally intense according to this score.\n"
+    )
+    file.write(
+        "Interpretation: Compound sentiment is also a weak pattern because some non-stories contain strong opinions, "
+        "while some stories are written in a neutral style.\n\n"
+    )
+
+    file.write("Additional observation: Negative sentiment\n")
+    file.write("------------------------------------------\n")
+    file.write("Method: Asent negative sentiment score.\n")
+    file.write(
+        "Observation: Stories had a slightly higher average negative sentiment score than non-stories "
+        "(0.054261 vs. 0.051910). This may reflect that some stories include problems, conflict, or difficult experiences.\n"
+    )
+    file.write(
+        "Interpretation: The difference is very small, so this is also not a strong rule by itself.\n\n"
+    )
+
+    file.write("Conclusion:\n")
+    file.write("-----------\n")
+    file.write(
+        "The pragmatic sentiment analysis showed only small differences between stories and non-stories. "
+        "Stories had a slightly higher negative sentiment score, but non-stories had slightly higher polarity, "
+        "compound sentiment, and subjectivity. This means that sentiment analysis alone is not a reliable way "
+        "to distinguish stories from non-stories. However, it can still provide useful supporting evidence when "
+        "combined with syntax and semantic features."
+    )
+
+
+# Save all sentiment scores to a CSV file
+SCORES_PATH = BASE_DIR / "pragmatic_sentiment_scores.csv"
+df.to_csv(SCORES_PATH, index=False)
 
 print("Done.")
 print("Created pragmatic_patterns.txt and pragmatic_sentiment_scores.csv")
