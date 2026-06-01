@@ -9,12 +9,12 @@ from spacytextblob.spacytextblob import SpacyTextBlob
 
 # ---------------------------------------------------------
 # Pragmatic analysis: story vs non-story
-# Author: Ema Slivkova
+# Author: Ema Slivková
 #
 # This script analyzes pragmatic patterns in the development
-# data. It includes:
-# 1. basic sentiment scores
-# 2. extra pragmatic/discourse features
+# data (dev.csv). It includes:
+# 1. basic sentiment scores (positive, neutral, negative sentiment, compound sentiment, subjectivity, polarity)
+# 2. extra pragmatic/discourse features (emotional language, temporal discourse markers, personal stance markers, sentiment shift)
 # 3. story vs non-story averages
 # 4. written rules and explanations
 # ---------------------------------------------------------
@@ -44,7 +44,7 @@ df = pd.read_csv(DATA_PATH)
 
 
 # -----------------------------
-# Word lists for pragmatic patterns
+# Word lists to detect pragmatic patterns
 # -----------------------------
 
 EMOTION_WORDS = {
@@ -80,30 +80,34 @@ STANCE_MARKERS = [
 
 
 # -----------------------------
-# Helper functions
+# Section with helper functions
 # -----------------------------
 
 def tokenize(text):
-    """Simple tokenizer for counting word-list features."""
+    """Split a normal sentence into a list of tokens/words that the program can count"""
     return re.findall(r"\b[\w']+\b", str(text).lower())
 
 
 def count_words_per_100(tokens, word_list):
-    """Count how often words from a list occur per 100 words."""
-    if len(tokens) == 0:
+    """Count how many words from word_list appear per 100 words.
+    This makes short and long texts easier to compare fairly
+    """
+    if len(tokens) == 0: # prevent an error (no words to count)
         return 0
 
-    count = sum(1 for token in tokens if token in word_list)
+    count = sum(1 for token in tokens if token in word_list) # counting emotion words or temporal markers
     return (count / len(tokens)) * 100
 
 
 def count_phrases_per_100(text, phrase_list, word_count):
-    """Count phrase markers such as 'I think' or 'in my opinion' per 100 words."""
-    if word_count == 0:
+    """Count stance markers such as 'I think' or 'in my opinion' per 100 words 
+    (so that short adn long texts can be compared fairly).
+    """
+    if word_count == 0: # prevent an error 
         return 0
 
-    text_lower = str(text).lower()
-    count = 0
+    text_lower = str(text).lower() 
+    count = 0 
 
     for phrase in phrase_list:
         count += text_lower.count(phrase)
@@ -112,23 +116,27 @@ def count_phrases_per_100(text, phrase_list, word_count):
 
 
 def get_compound_sentiment(text):
-    """Return Asent compound sentiment for a piece of text."""
+    """Calculate the compound sentiment score for a piece of text using Asent."""
     doc = nlp(str(text))
-    return doc._.polarity.compound
+    return doc._.polarity.compound # return one overall sentiment score for the text
 
 
 def get_sentiment_shift(text):
     """
     Split a text into beginning, middle, and end.
     Then calculate how much the compound sentiment changes.
+    Basically asking: Does the text change emotionally from beginning
+    to middle to end? 
+    For example, stories can have emotional movement - for example, 
+    a story can start badly, then become tense, and end positiviely. 
     """
     doc = nlp(str(text))
-    sentences = [sent.text for sent in doc.sents]
+    sentences = [sent.text for sent in doc.sents] # splitting the text into sentences
 
-    if len(sentences) < 3:
-        return 0
+    if len(sentences) < 3: # if the text has fewer than 3 sentences, the function returns 0 (it can't properly split it)
+        return 0 
 
-    third = max(1, len(sentences) // 3)
+    third = max(1, len(sentences) // 3) # calculate how many sentence should go into each part 
 
     beginning = " ".join(sentences[:third])
     middle = " ".join(sentences[third:third * 2])
@@ -140,35 +148,36 @@ def get_sentiment_shift(text):
         get_compound_sentiment(end)
     ]
 
-    return max(scores) - min(scores)
+    return max(scores) - min(scores) # the difference between the highest and the lowest sentiment score
 
 
 def analyze_pragmatics(text):
     """
     Extract sentiment and pragmatic/discourse features from one text.
+    The central analysis function of the script.
     """
-    text = str(text)
-    tokens = tokenize(text)
-    word_count = len(tokens)
+    text = str(text) 
+    tokens = tokenize(text) # use tokenize function to turn the text into separate words
+    word_count = len(tokens) # count the number of words in text
 
     doc = nlp(text)
 
-    return {
+    return { # return a dictionary:
         "word_count": word_count,
 
-        # Basic sentiment scores
-        "asent_neg": doc._.polarity.negative,
-        "asent_neu": doc._.polarity.neutral,
-        "asent_pos": doc._.polarity.positive,
-        "asent_compound": doc._.polarity.compound,
-        "polarity": doc._.blob.polarity,
-        "subjectivity": doc._.blob.subjectivity,
+        # Basic sentiment scores from Asent:
+        "asent_neg": doc._.polarity.negative, # how negative the text is
+        "asent_neu": doc._.polarity.neutral, # how neutral the text is
+        "asent_pos": doc._.polarity.positive, # how positive the text is
+        "asent_compound": doc._.polarity.compound, # one overall sentiment score 
+        "polarity": doc._.blob.polarity, # polarity: whether the text is positive or negative 
+        "subjectivity": doc._.blob.subjectivity, # subjectivity: whether the text is more objective/factual or subjective/opinion-based
 
         # Extra pragmatic/discourse features
-        "emotion_per_100": count_words_per_100(tokens, EMOTION_WORDS),
-        "temporal_per_100": count_words_per_100(tokens, TEMPORAL_MARKERS),
-        "stance_per_100": count_phrases_per_100(text, STANCE_MARKERS, word_count),
-        "sentiment_shift": get_sentiment_shift(text)
+        "emotion_per_100": count_words_per_100(tokens, EMOTION_WORDS), # count emotion words such as happy, sad, angry, or worried, per 100 words
+        "temporal_per_100": count_words_per_100(tokens, TEMPORAL_MARKERS), # count temporal markers, such as then, later, after, or finally, per 100 words
+        "stance_per_100": count_phrases_per_100(text, STANCE_MARKERS, word_count), # count stance/opinion phrases, such as I think, personally, or in my opinion, per 100 words
+        "sentiment_shift": get_sentiment_shift(text) # measure how much the sentiment changes between the beginning, middle, and end of the text
     }
 
 
