@@ -1,36 +1,53 @@
-Pragmatic Patterns: Sentiment Analysis
-=====================================
+Pragmatic Patterns: Story vs Non-Story
+======================================
 
-Average sentiment values for story and non-story texts:
-           asent_neg  asent_neu  asent_pos  asent_compound  polarity  subjectivity
-label                                                                             
-non-story   0.051910   0.562412   0.082117        0.085086  0.093827      0.492170
-story       0.054261   0.558300   0.079397        0.069625  0.087770      0.476215
+Average pragmatic feature values:
+---------------------------------
+           word_count  asent_neg  asent_neu  asent_pos  asent_compound  polarity  subjectivity  emotion_per_100  temporal_per_100  stance_per_100  sentiment_shift
+label                                                                                                                                                             
+non-story  197.961749   0.051910   0.562412   0.082117        0.085086  0.093827      0.492170         0.145647          0.824465        0.417200         0.391350
+story      268.470238   0.054261   0.558300   0.079397        0.069625  0.087770      0.476215         0.193698          1.645550        0.402981         0.330984
 
-Pattern 1: Polarity
--------------------
-Method: spacytextblob polarity score.
-Observation: Non-stories had a slightly higher average polarity score than stories (0.093827 vs. 0.087770). This means non-stories were a little more positive on average, but the difference was very small.
-Interpretation: Polarity is a weak pattern because both stories and non-stories can contain positive or negative language.
+Basic sentiment analysis
+------------------------
+Method: Asent and spacytextblob sentiment scores.
+Features: negative sentiment, neutral sentiment, positive sentiment, compound sentiment, polarity, and subjectivity.
+Observation: Stories had an average negative sentiment score of 0.054, while non-stories had an average score of 0.052. Stories had an average compound sentiment score of 0.070, while non-stories had an average score of 0.085. Stories had an average subjectivity score of 0.476, while non-stories had an average score of 0.492.
+Rule: Basic sentiment scores can be used as supporting evidence, but not as the main rule. If one label has clearly stronger negative, positive, compound, or subjective language, this may give weak evidence for that label.
+Explanation: Sentiment analysis is useful for detecting attitudes and opinions, but story and non-story texts can both contain emotional or subjective language. Therefore, sentiment alone is not expected to be a strong distinction.
 
-Pattern 2: Subjectivity
------------------------
-Method: spacytextblob subjectivity score.
-Observation: Non-stories had a slightly higher average subjectivity score than stories (0.492170 vs. 0.476215). This suggests that many non-stories in the dataset are also opinion-based.
-Interpretation: This pattern did not support the expectation that stories would be more subjective. Reddit non-stories often include advice, opinions, and arguments, which also increases subjectivity.
-
-Pattern 3: Compound sentiment
+Pattern 1: Emotional language
 -----------------------------
-Method: Asent compound sentiment score.
-Observation: Non-stories had a slightly higher average compound sentiment score than stories (0.085086 vs. 0.069625). Stories were not clearly more emotionally intense according to this score.
-Interpretation: Compound sentiment is also a weak pattern because some non-stories contain strong opinions, while some stories are written in a neutral style.
+Method: Count emotion words per 100 words.
+Story average: 0.194
+Non-story average: 0.146
+Rule: If emotion_per_100 is higher than approximately 0.170, this gives evidence for story.
+Explanation: This pattern may help because stories often describe personal or emotional experiences. However, it can fail because non-stories on Reddit can also contain strong opinions, complaints, or emotional reactions.
 
-Additional observation: Negative sentiment
-------------------------------------------
-Method: Asent negative sentiment score.
-Observation: Stories had a slightly higher average negative sentiment score than non-stories (0.054261 vs. 0.051910). This may reflect that some stories include problems, conflict, or difficult experiences.
-Interpretation: The difference is very small, so this is also not a strong rule by itself.
+Pattern 2: Temporal discourse markers
+-------------------------------------
+Method: Count temporal markers per 100 words, such as then, after, when, later, suddenly, eventually, and finally.
+Story average: 1.646
+Non-story average: 0.824
+Rule: If temporal_per_100 is higher than approximately 1.235, this gives evidence for story.
+Explanation: This pattern is useful because stories often organize events in a time sequence. It can fail when non-stories explain steps, processes, or examples in chronological order.
 
-Conclusion:
------------
-The pragmatic sentiment analysis showed only small differences between stories and non-stories. Stories had a slightly higher negative sentiment score, but non-stories had slightly higher polarity, compound sentiment, and subjectivity. This means that sentiment analysis alone is not a reliable way to distinguish stories from non-stories. However, it can still provide useful supporting evidence when combined with syntax and semantic features.
+Pattern 3: Personal stance markers
+----------------------------------
+Method: Count expressions per 100 words, such as I think, I feel, I believe, personally, honestly, for me, and to me.
+Story average: 0.403
+Non-story average: 0.417
+Rule: If stance_per_100 is lower than approximately 0.410, this gives evidence for story.
+Explanation: This pattern may help when stories are written as personal experiences. However, it can fail because non-stories can also include personal opinions or arguments.
+
+Pattern 4: Sentiment shift
+--------------------------
+Method: Split each text into beginning, middle, and end. Then calculate the difference between the highest and lowest compound sentiment score.
+Story average: 0.331
+Non-story average: 0.391
+Rule: If sentiment_shift is lower than approximately 0.361, this gives evidence for story.
+Explanation: This pattern may help because stories can develop emotionally from beginning to end. It can fail when a story has a stable emotional tone or when a non-story contains a strong change in opinion.
+
+Conclusion
+----------
+The basic sentiment scores were useful as a starting point, but they do not fully capture the difference between stories and non-stories. More useful pragmatic patterns come from discourse-level features: emotional language, temporal organization, personal stance, and sentiment development across the text. These features focus on how language is used to express attitudes, personal involvement, and narrative structure.
