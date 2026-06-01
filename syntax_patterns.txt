@@ -1,0 +1,36 @@
+Syntax Patterns: Story vs Non-Story
+
+
+Pattern 1: Pronouns and adverbs
+
+In the development data, story texts used slightly more pronouns and adverbs than non-story texts. I checked this with spaCy POS tags, using token.pos_.
+
+The idea was that stories are often more personal. They often use words like “I”, “he”, “she”, “they”, and adverbs like “then”, “suddenly”, or “really”.
+
+Rule used:
+If the PRON ratio + ADV ratio was higher than 0.19, the text was classified as story. Otherwise, it was classified as non-story.
+
+Result:
+The rule got 212 out of 351 texts correct. The accuracy was 0.604.
+
+This pattern worked a bit, but it was not very strong. It failed when non-story posts were also written in a personal style, or when stories did not use many pronouns or adverbs.
+
+Pattern 2: Past-tense verbs
+
+The stronger pattern was past-tense verbs. Story texts had more VBD tags than non-story texts. I checked this with spaCy’s fine-grained POS tags, using token.tag_.
+
+The VBD ratio was 0.04 for story texts and 0.02 for non-story texts. This means that stories used about twice as many past-tense verbs.
+
+Rule used:
+If the VBD ratio was higher than 0.03, the text was classified as story. Otherwise, it was classified as non-story.
+
+Result:
+The rule got 235 out of 351 texts correct. The accuracy was 0.67.
+
+This worked better because many stories describe things that happened in the past. It failed when a story was not written in past tense, or when a non-story text also talked about past events.
+
+Additional dependency observation
+
+I also looked at dependency labels with token.dep_. These differences were smaller. Story texts had slightly more advmod and dobj labels. Non-story texts had slightly more compound, amod, and prep labels.
+
+This was not a strong pattern. The sentence structures of story and non-story Reddit posts were often quite similar. For this dataset, POS tags and past-tense verbs were more useful than dependency labels.
