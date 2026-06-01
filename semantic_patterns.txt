@@ -1,0 +1,42 @@
+Entity count: hypothesis is that a story text has more entities than a nonstroy text
+Entity count in story text: 1670
+Entity count in nonstroy text: 1527
+
+Entity type in percentage
+PERSON
+Percent of person entities in story is 16.227544910179642
+Percent of person entities in non-story is 17.550753110674524
+NORP
+Percent of nationalities or religious or political groups entities in story is 5.089820359281437
+Percent of nationalities or religious or political groups entities in non-story is 5.762933857236411
+FAC
+Percent of buildings, airports, highways, bridges entities in story is 0.47904191616766467
+Percent of buildings, airports, highways, bridges entities in non-story is 0.9823182711198428
+ORG
+Percent of companies, agencies, institutions entities in story is 18.742514970059883
+Percent of companies, agencies, institutions entities in non-story is 21.28356254092993
+GPE
+Percent of countries, cities, states entities in story is 6.347305389221557
+Percent of countries, cities, states entities in non-story is 7.858546168958743
+PRODUCT
+Percent of objects, vehicles, foods, etc entities in story is 0.9580838323353293
+Percent of objects, vehicles, foods, etc entities in non-story is 0.9168303863785201
+EVENT
+Percent of named hurricanes, battles, wars, sports events, etc entities in story is 0.29940119760479045
+Percent of named hurricanes, battles, wars, sports events, etc entities in non-story is 0.9168303863785201
+LANGUAGE
+Percent of any named language entities in story is 0.059880239520958084
+Percent of any named language entities in non-story is 0.6548788474132285
+DATE
+Percent of absolute or relative dates or periods entities in story is 17.724550898203592
+Percent of absolute or relative dates or periods entities in non-story is 13.294040602488538
+TIME
+Percent of times smaller than a day entities in story is 3.7125748502994016
+Percent of times smaller than a day entities in non-story is 2.9469548133595285
+PERCENT
+Percent of Percentage, including ”%“ entities in story is 1.0778443113772456
+Percent of Percentage, including ”%“ entities in story is 1.8336607727570402
+
+CHAIN LENGHT
+The average chain lenght in stories is 2.942
+The average chain lenght in non-stories is 2.816
