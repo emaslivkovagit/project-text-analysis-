@@ -36,7 +36,7 @@ nlp.add_pipe("spacytextblob")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-DATA_PATH = BASE_DIR / "dev data" / "dev.csv"
+DATA_PATH = BASE_DIR / "dev_data" / "dev.csv"
 OUTPUT_PATH = BASE_DIR / "pragmatic_patterns.txt"
 SCORES_PATH = BASE_DIR / "pragmatic_scores.csv"
 
