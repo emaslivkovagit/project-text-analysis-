@@ -40,3 +40,7 @@ Percent of Percentage, including ”%“ entities in story is 1.8336607727570402
 CHAIN LENGHT
 The average chain lenght in stories is 2.942
 The average chain lenght in non-stories is 2.816
+
+CHAINS PER 100 TOKENS
+average chains per 100 tokens in stories is 1.989
+average chains per 100 tokens in stories is 1.835

@@ -6,7 +6,6 @@ import csv
 from collections import Counter, defaultdict
 from nltk.wsd import lesk
 from nltk.corpus import wordnet as wn
-import sys
 
 # loads english pipeline and wordnet
 nltk.download('wordnet')
@@ -41,7 +40,7 @@ def entity_count(rows):
     print()
 
 
-#how many entities are Person entities of total 
+# Entity type in percentage  
 def person_amount(rows):
     total_story = 0
     total_non = 0
@@ -225,17 +224,14 @@ def person_amount(rows):
     print(f"Percent of Percentage, including ”%“ entities in story is {percent_story_p}")
     print(f"Percent of Percentage, including ”%“ entities in story is {percent_nonstory_p}")
 
-# coreference resolution 
 # safe average used 
 def the_avg(list):
     return round(sum(list) / len(list), 3) if list else 0
 
-# chain lenght? stories could have longer chains?
+# Chain lenght
 def chain_lenght(rows): 
     lenghts_story = []
     lengths_non = []
-    story_chain = []
-    non_chain = []
 
     for text, label in rows:
         doc = nlp(text)
@@ -259,8 +255,7 @@ def chain_lenght(rows):
     print(f"The average chain lenght in non-stories is {the_avg(lengths_non)}")
 
 
-#pronouns in chains? maybe look at what percentage of chains is pronouns? stories maybe have more?
-# chain count? amount of chains per 100 tokens ??? 
+# Chain count per 100 tokens
 def chain_count(rows):
     story = []
     nonstory = []
@@ -272,17 +267,32 @@ def chain_count(rows):
         if token_count == 0:
             continue
 
-        pass
+        chain_count = 0
+        if doc._.coref_chains:
+            chain_count = len(doc._.coref_chains)
+        else:
+            chain_count = 0
+        per_hundred = (chain_count/ token_count) * 100
 
+        if label == "story":
+            story.append(per_hundred)
+        else: 
+            nonstory.append(per_hundred)
 
-# python3 semantics.py > semantic_patterns.txt
+    print("")
+    print("CHAINS PER 100 TOKENS")
+    print(f"average chains per 100 tokens in stories is {the_avg(story)}")
+    print(f"average chains per 100 tokens in stories is {the_avg(nonstory)}")
+
+# main
 def main():
     filepath = "dev.csv"
     rows = read_file(filepath)
 
     entity_count(rows)
-    person_amount(rows) # ORG and DATE showed results 
+    person_amount(rows) 
     chain_lenght(rows)
+    chain_count(rows)
 
 if __name__ == "__main__":
     main()
