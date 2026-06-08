@@ -6,6 +6,7 @@ import csv
 from collections import Counter, defaultdict
 from nltk.wsd import lesk
 from nltk.corpus import wordnet as wn
+import sys
 
 # loads english pipeline and wordnet
 nltk.download('wordnet')
@@ -25,20 +26,26 @@ def read_file(filepath):
 def entity_count(rows):
     storycount = 0
     noncount = 0
+    story_texts = 0
+    non_texts = 0
 
     for text, label in rows:
         doc = nlp(text)
-        entity_count = len(doc.ents)
+        count = len(doc.ents)
         if label == "story":
-            storycount += entity_count
+            storycount += count
+            story_texts += 1
         else:
-            noncount += entity_count
-        
-    print("Entity count: hypothesis is that a story text has more entities than a nonstroy text")
-    print(f"Entity count in story text: {storycount}")
-    print(f"Entity count in nonstroy text: {noncount}")
-    print()
+            noncount += count
+            non_texts += 1
+    
+    story_avg = storycount / story_texts if story_texts > 0 else 0
+    non_avg = noncount / non_texts if non_texts > 0 else 0
 
+    print("ENTITY COUNT")
+    print(f"Average entities per story text: {story_avg}")
+    print(f"Average entities per non-story text: {non_avg}")
+    print("")
 
 # Entity type in percentage  
 def person_amount(rows):
@@ -171,7 +178,7 @@ def person_amount(rows):
         org_nonstory_p = (org_nonstory/total_non) * 100
         gpe_nonstory_p = (gpe_nonstory/total_non) * 100
         product_nonstory_p = (product_nonstory/total_non) * 100
-        event_nonstory_p = (product_nonstory/total_non) * 100
+        event_nonstory_p = (event_nonstory/total_non) * 100
         lan_nonstory_p = (lan_nonstory/total_non) * 100
         time_nonstory_p = (time_nonstory/total_non) * 100
         date_nonstory_p = (date_nonstory/total_non) * 100
@@ -286,7 +293,7 @@ def chain_count(rows):
 
 # main
 def main():
-    filepath = "dev.csv"
+    filepath = sys.argv[1]
     rows = read_file(filepath)
 
     entity_count(rows)

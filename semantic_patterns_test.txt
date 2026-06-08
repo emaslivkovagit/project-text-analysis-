@@ -1,0 +1,46 @@
+ENTITY COUNT
+Average entities per story text: 11.38888888888889
+Average entities per non-story text: 7.848101265822785
+
+Entity type in percentage
+PERSON
+Percent of person entities in story is 13.048780487804878
+Percent of person entities in non-story is 10.32258064516129
+NORP
+Percent of nationalities or religious or political groups entities in story is 3.6585365853658534
+Percent of nationalities or religious or political groups entities in non-story is 3.5483870967741935
+FAC
+Percent of buildings, airports, highways, bridges entities in story is 0.6097560975609756
+Percent of buildings, airports, highways, bridges entities in non-story is 1.6129032258064515
+ORG
+Percent of companies, agencies, institutions entities in story is 21.463414634146343
+Percent of companies, agencies, institutions entities in non-story is 22.741935483870968
+GPE
+Percent of countries, cities, states entities in story is 10.0
+Percent of countries, cities, states entities in non-story is 10.161290322580644
+PRODUCT
+Percent of objects, vehicles, foods, etc entities in story is 0.975609756097561
+Percent of objects, vehicles, foods, etc entities in non-story is 1.7741935483870968
+EVENT
+Percent of named hurricanes, battles, wars, sports events, etc entities in story is 0.3658536585365854
+Percent of named hurricanes, battles, wars, sports events, etc entities in non-story is 0.4838709677419355
+LANGUAGE
+Percent of any named language entities in story is 0.3658536585365854
+Percent of any named language entities in non-story is 0.4838709677419355
+DATE
+Percent of absolute or relative dates or periods entities in story is 18.414634146341463
+Percent of absolute or relative dates or periods entities in non-story is 13.064516129032258
+TIME
+Percent of times smaller than a day entities in story is 1.951219512195122
+Percent of times smaller than a day entities in non-story is 2.5806451612903225
+PERCENT
+Percent of Percentage, including ”%“ entities in story is 1.2195121951219512
+Percent of Percentage, including ”%“ entities in story is 2.741935483870968
+
+CHAIN LENGHT
+The average chain lenght in stories is 2.886
+The average chain lenght in non-stories is 2.656
+
+CHAINS PER 100 TOKENS
+average chains per 100 tokens in stories is 1.919
+average chains per 100 tokens in stories is 1.987
