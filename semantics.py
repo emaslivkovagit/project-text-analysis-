@@ -229,7 +229,7 @@ def person_amount(rows):
     print(f"Percent of times smaller than a day entities in non-story is {time_nonstory_p}")
     print("PERCENT")
     print(f"Percent of Percentage, including ”%“ entities in story is {percent_story_p}")
-    print(f"Percent of Percentage, including ”%“ entities in story is {percent_nonstory_p}")
+    print(f"Percent of Percentage, including ”%“ entities in non-story is {percent_nonstory_p}")
 
 # safe average used 
 def the_avg(list):
