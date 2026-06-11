@@ -124,12 +124,13 @@ def print_ratios(counter_by_label, title, top_n=10):
     """Print the most common syntax tags as ratios for each label.
     """
 
-    # Total number of labels 
+    # Total number of labels  / tokens
     for label in counter_by_label:
         total = sum(counter_by_label[label].values())
 
         print(f"\n{label.upper()} {title} RATIOS")
 
+        # Divides tag count by total number of tokens in that label
         for item, count in counter_by_label[label].most_common(top_n):
             ratio = count / total
             print(item, round(ratio, 3))
@@ -137,6 +138,8 @@ def print_ratios(counter_by_label, title, top_n=10):
 def print_comparison(counter_by_label, items, title):
     """Compare selected POS or dependency tags between story and non-story.
     """
+
+    # Calculates total story / non-story tokens
     story_total = sum(counter_by_label["story"].values())
     non_story_total = sum(counter_by_label["non-story"].values())
 
@@ -223,7 +226,7 @@ print_rule_results(
     vbd_prediction_results
 )
 
-with open("syntax_patterns.txt", "w", encoding="utf-8") as file:
+with open("../syntax_patterns.txt", "w", encoding="utf-8") as file:
 
     file.write("""Syntax Patterns: Story vs Non-Story\n
 
