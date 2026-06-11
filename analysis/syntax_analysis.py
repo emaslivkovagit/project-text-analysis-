@@ -4,8 +4,14 @@ from collections import Counter
 
 nlp = spacy.load("en_core_web_md")
 
+# Analyze one dataset file and collect syntax-based patterns and rule results.
 
 def analyze_dataset(filename):
+    """Set up counters to store syntax patterns and 
+    rule evaluation results for story and non-story texts.
+    """
+     
+
     pos_by_label = {
         "story": Counter(),
         "non-story": Counter()
@@ -35,7 +41,7 @@ def analyze_dataset(filename):
     }
 
     
-
+    #open dataset and loops through rows in the file
     with open(filename, "r", encoding="utf-8") as file:
         reader = csv.DictReader(file)
 
@@ -49,6 +55,7 @@ def analyze_dataset(filename):
             token_count = 0
             text_vbd_count = 0
 
+            # Clean up tokens updates counts
             for token in doc:
                 if not token.is_punct and not token.is_space:
                     pos_by_label[label][token.pos_] += 1
@@ -61,11 +68,13 @@ def analyze_dataset(filename):
                         vbd_by_label[label] += 1
                         text_vbd_count += 1
 
+            # Ratio for PRON and ADV rule
             if token_count > 0:
                 pron_ratio = text_pos["PRON"] / token_count
                 adv_ratio = text_pos["ADV"] / token_count
                 story_score = pron_ratio + adv_ratio
 
+                # Update prediction counts
                 if story_score > 0.19:
                     prediction = "story"
                 else:
@@ -73,14 +82,16 @@ def analyze_dataset(filename):
 
                 total_texts += 1
 
+                # Updates the label count
                 if prediction == label:
                     correct_predictions += 1
 
                 prediction_results[(label, prediction)] += 1
         
-        
+                # Ratio for VBD Rule
                 vbd_ratio = text_vbd_count / token_count
 
+                # Actual VBD Rule
                 if vbd_ratio > 0.03:
                     vbd_prediction = "story"
                 else:
@@ -88,10 +99,14 @@ def analyze_dataset(filename):
 
                 total_vbd_texts += 1
 
+                
+                # Updates VBD Count
                 if vbd_prediction == label:
                     correct_vbd_predictions += 1
 
                 vbd_prediction_results[(label, vbd_prediction)] += 1
+
+
     return (
     pos_by_label,
     dep_by_label,
@@ -106,6 +121,10 @@ def analyze_dataset(filename):
 ) 
 
 def print_ratios(counter_by_label, title, top_n=10):
+    """Print the most common syntax tags as ratios for each label.
+    """
+
+    # Total number of labels 
     for label in counter_by_label:
         total = sum(counter_by_label[label].values())
 
@@ -115,13 +134,15 @@ def print_ratios(counter_by_label, title, top_n=10):
             ratio = count / total
             print(item, round(ratio, 3))
 
-
 def print_comparison(counter_by_label, items, title):
+    """Compare selected POS or dependency tags between story and non-story.
+    """
     story_total = sum(counter_by_label["story"].values())
     non_story_total = sum(counter_by_label["non-story"].values())
 
     print(f"\n{title} COMPARISON")
 
+    # Loops through items and divides by total number of tokens
     for item in items:
         story_ratio = counter_by_label["story"][item] / story_total
         non_story_ratio = counter_by_label["non-story"][item] / non_story_total
@@ -133,14 +154,21 @@ def print_comparison(counter_by_label, items, title):
         print(" difference:", round(difference, 3))
 
 def print_vbd_results(vbd_by_label, token_total_by_label):
+    """
+    Print the ratio of past-tense verbs for story and non-story texts.
+    """
     print("\nPAST-TENSE VERB PATTERN")
 
+    # Loops through labels in the variable and returns the ratio
     for label in vbd_by_label:
         ratio = vbd_by_label[label] / token_total_by_label[label]
         print(label, "VBD ratio:", round(ratio, 3))
 
 
 def print_rule_results(title, rule_description, correct, total, results):
+    """
+    Print the accuracy and prediction results for one rule.
+    """
     print("\n" + title)
     print("Rule:", rule_description)
     print("Correct:", correct)
@@ -166,7 +194,7 @@ def print_rule_results(title, rule_description, correct, total, results):
     correct_vbd_predictions,
     total_vbd_texts,
     vbd_prediction_results
-) = analyze_dataset("dev.csv")
+) = analyze_dataset("../dev_data/test.csv")
 
 main_pos = ["PRON", "VERB", "AUX", "NOUN", "ADJ", "ADV", "PROPN"]
 main_deps = ["nsubj", "dobj", "pobj", "ROOT", "advmod", "amod", "compound", "prep"]
@@ -176,6 +204,8 @@ print_ratios(dep_by_label, "DEP")
 
 print_comparison(pos_by_label, main_pos, "POS")
 print_comparison(dep_by_label, main_deps, "DEPENDENCY")
+
+print_vbd_results(vbd_by_label, token_total_by_label)
 
 print_rule_results(
     "SIMPLE PRON + ADV RULE",
