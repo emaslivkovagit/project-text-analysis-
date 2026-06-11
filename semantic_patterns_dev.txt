@@ -34,8 +34,8 @@ TIME
 Percent of times smaller than a day entities in story is 3.7125748502994016
 Percent of times smaller than a day entities in non-story is 2.9469548133595285
 PERCENT
-Percent of Percentage, including ”%“ entities in story is 1.0778443113772456
-Percent of Percentage, including ”%“ entities in story is 1.8336607727570402
+Percent of Percentage, including "%" entities in story is 1.0778443113772456
+Percent of Percentage, including "%" entities in non-story is 1.8336607727570402
 
 CHAIN LENGHT
 The average chain lenght in stories is 2.942
@@ -43,4 +43,72 @@ The average chain lenght in non-stories is 2.816
 
 CHAINS PER 100 TOKENS
 average chains per 100 tokens in stories is 1.989
-average chains per 100 tokens in stories is 1.835
+average chains per 100 tokens in non-stories is 1.835
+ENTITY COUNT
+Average entities per story text: 9.94047619047619
+Average entities per non-story text: 8.344262295081966
+
+Entity type in percentage
+PERSON
+Percent of person entities in story is 16.227544910179642
+Percent of person entities in non-story is 17.550753110674524
+NORP
+Percent of nationalities or religious or political groups entities in story is 5.089820359281437
+Percent of nationalities or religious or political groups entities in non-story is 5.762933857236411
+FAC
+Percent of buildings, airports, highways, bridges entities in story is 0.47904191616766467
+Percent of buildings, airports, highways, bridges entities in non-story is 0.9823182711198428
+ORG
+Percent of companies, agencies, institutions entities in story is 18.742514970059883
+Percent of companies, agencies, institutions entities in non-story is 21.28356254092993
+GPE
+Percent of countries, cities, states entities in story is 6.347305389221557
+Percent of countries, cities, states entities in non-story is 7.858546168958743
+PRODUCT
+Percent of objects, vehicles, foods, etc entities in story is 0.9580838323353293
+Percent of objects, vehicles, foods, etc entities in non-story is 0.9168303863785201
+EVENT
+Percent of named hurricanes, battles, wars, sports events, etc entities in story is 0.29940119760479045
+Percent of named hurricanes, battles, wars, sports events, etc entities in non-story is 0.26195153896529144
+LANGUAGE
+Percent of any named language entities in story is 0.059880239520958084
+Percent of any named language entities in non-story is 0.6548788474132285
+DATE
+Percent of absolute or relative dates or periods entities in story is 17.724550898203592
+Percent of absolute or relative dates or periods entities in non-story is 13.294040602488538
+TIME
+Percent of times smaller than a day entities in story is 3.7125748502994016
+Percent of times smaller than a day entities in non-story is 2.9469548133595285
+PERCENT
+Percent of Percentage, including "%" entities in story is 1.0778443113772456
+Percent of Percentage, including "%" entities in non-story is 1.8336607727570402
+
+CHAIN LENGHT
+The average chain lenght in stories is 2.942
+The average chain lenght in non-stories is 2.816
+
+CHAINS PER 100 TOKENS
+average chains per 100 tokens in stories is 1.989
+average chains per 100 tokens in non-stories is 1.835
+
+THRESHOLDS LEARNED FROM DEV DATA
+Entity count: story: 9.94047619047619 non-story: 8.344262295081966 threshold:9.142369242779079
+Chain length: story: 2.942 non-story: 2.816 threshold: 2.879
+Chain count per 100 tokens: story: 1.989 non-story: 1.835 threshold: 1.912
+
+Entity types:
+PERSON: story: 16.227544910179642% non-story: 17.550753110674524% threshold:16.889149010427083% (story is lower)
+NORP: story: 5.089820359281437% non-story: 5.762933857236411% threshold:5.426377108258924% (story is lower)
+FAC: story: 0.47904191616766467% non-story: 0.9823182711198428% threshold:0.7306800936437537% (story is lower)
+ORG: story: 18.742514970059883% non-story: 21.28356254092993% threshold:20.013038755494904% (story is lower)
+GPE: story: 6.347305389221557% non-story: 7.858546168958743% threshold:7.10292577909015% (story is lower)
+PRODUCT: story: 0.9580838323353293% non-story: 0.9168303863785201% threshold:0.9374571093569247% (story is higher)
+EVENT: story: 0.29940119760479045% non-story: 0.26195153896529144% threshold:0.28067636828504094% (story is higher)
+LANGUAGE: story: 0.059880239520958084% non-story: 0.6548788474132285% threshold:0.35737954346709333% (story is lower)
+DATE: story: 17.724550898203592% non-story: 13.294040602488538% threshold:15.509295750346066% (story is higher)
+TIME: story: 3.7125748502994016% non-story: 2.9469548133595285% threshold:3.329764831829465% (story is higher)
+PERCENT: story: 1.0778443113772456% non-story: 1.8336607727570402% threshold:1.4557525420671429% (story is lower)
+
+PREDICTION RESULTS ON TEST DATA
+Correct: 201/351
+Accuracy: 57.26495726495726%

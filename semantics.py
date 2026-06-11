@@ -22,7 +22,7 @@ def read_file(filepath):
             rows.append((row["content"], row["label"].strip().lower()))
         return rows
     
-#how many entities are there in story vs non-story text
+# how many entities are there in story vs non-story text
 def entity_count(rows):
     storycount = 0
     noncount = 0
@@ -47,7 +47,9 @@ def entity_count(rows):
     print(f"Average entities per non-story text: {non_avg}")
     print("")
 
-# Entity type in percentage  
+    return story_avg, non_avg
+
+# Entity type in percentage 
 def person_amount(rows):
     total_story = 0
     total_non = 0
@@ -74,6 +76,8 @@ def person_amount(rows):
     percent_story = 0
     percent_nonstory = 0
 
+    ent_stats = {"story": Counter(), "non-story": Counter()}
+    ent_totals = {"story": 0, "non-story": 0}
 
     for text, label in rows:
         doc = nlp(text)
@@ -114,7 +118,6 @@ def person_amount(rows):
             if ent.label_ == "PERCENT":
                 percent += 1
 
-        
         if label == "story":
             total_story += total
             person_story += persons
@@ -143,6 +146,11 @@ def person_amount(rows):
             date_nonstory += date
             percent_nonstory += percent
 
+        norm_label = label if label in ent_stats else "non-story"
+        if total > 0:
+            ent_totals[norm_label] += total
+            for ent in doc.ents:
+                ent_stats[norm_label][ent.label_] += 1
 
     #story 
     if total_story > 0:
@@ -170,7 +178,7 @@ def person_amount(rows):
         date_story_p = 0
         percent_story_p = 0
     
-    #nonstroy 
+    #nonstory 
     if total_non > 0:
         person_nonstory_p = (person_nonstory/total_non) * 100
         norp_nonstory_p = (norp_nonstory/total_non) * 100
@@ -228,14 +236,16 @@ def person_amount(rows):
     print(f"Percent of times smaller than a day entities in story is {time_story_p}")
     print(f"Percent of times smaller than a day entities in non-story is {time_nonstory_p}")
     print("PERCENT")
-    print(f"Percent of Percentage, including ”%“ entities in story is {percent_story_p}")
-    print(f"Percent of Percentage, including ”%“ entities in non-story is {percent_nonstory_p}")
+    print(f'Percent of Percentage, including "%" entities in story is {percent_story_p}')
+    print(f'Percent of Percentage, including "%" entities in non-story is {percent_nonstory_p}')
+
+    return ent_stats, ent_totals
 
 # safe average used 
 def the_avg(list):
     return round(sum(list) / len(list), 3) if list else 0
 
-# Chain lenght
+# Chain length
 def chain_lenght(rows): 
     lenghts_story = []
     lengths_non = []
@@ -260,6 +270,8 @@ def chain_lenght(rows):
     print("CHAIN LENGHT")
     print(f"The average chain lenght in stories is {the_avg(lenghts_story)}")
     print(f"The average chain lenght in non-stories is {the_avg(lengths_non)}")
+
+    return the_avg(lenghts_story), the_avg(lengths_non)
 
 
 # Chain count per 100 tokens
@@ -289,17 +301,155 @@ def chain_count(rows):
     print("")
     print("CHAINS PER 100 TOKENS")
     print(f"average chains per 100 tokens in stories is {the_avg(story)}")
-    print(f"average chains per 100 tokens in stories is {the_avg(nonstory)}")
+    print(f"average chains per 100 tokens in non-stories is {the_avg(nonstory)}")
+
+    return the_avg(story), the_avg(nonstory)
+
+def predict(test_rows, ent_stats, ent_totals,
+            avg_chain_len_story, avg_chain_len_non,
+            avg_chain_count_story, avg_chain_count_non,
+            avg_entity_story, avg_entity_non):
+
+    thr_entity_count = (avg_entity_story + avg_entity_non) / 2
+    thr_chain_len = (avg_chain_len_story + avg_chain_len_non) / 2
+    thr_chain_count = (avg_chain_count_story + avg_chain_count_non) / 2
+
+    entity_types = ["PERSON", "NORP", "FAC", "ORG", "GPE", "PRODUCT", "EVENT", "LANGUAGE", "DATE", "TIME", "PERCENT"]
+
+    def entity_type_p(label, etype):
+        total = ent_totals[label]
+        return (ent_stats[label][etype] / total * 100) if total > 0 else 0
+    
+    etype_thresholds = {}
+    etype_story_higher = {}
+    for etype in entity_types:
+        story_percentage = entity_type_p("story", etype)
+        nonstory_percentage = entity_type_p("non-story", etype)
+        etype_thresholds[etype] = (story_percentage + nonstory_percentage) / 2
+        etype_story_higher[etype] = story_percentage > nonstory_percentage
+    
+    story_higher_entity_count = avg_entity_story > avg_entity_non
+    story_higher_chain_len = avg_chain_len_story > avg_chain_len_non
+    story_higher_chain_count = avg_chain_count_story > avg_chain_count_non
+    
+    print("")
+    print("THRESHOLDS LEARNED FROM DEV DATA")
+    print(f"Entity count: story: {avg_entity_story} non-story: {avg_entity_non} threshold:{thr_entity_count}")
+    print(f"Chain length: story: {avg_chain_len_story} non-story: {avg_chain_len_non} threshold: {thr_chain_len}")
+    print(f"Chain count per 100 tokens: story: {avg_chain_count_story} non-story: {avg_chain_count_non} threshold: {thr_chain_count}")
+    print("")
+    print("Entity types:")
+    for etype in entity_types:
+        story_percentage = entity_type_p("story", etype)
+        nonstory_percentage = entity_type_p("non-story", etype)
+        print(f"{etype}: story: {story_percentage}% non-story: {nonstory_percentage}% threshold:{etype_thresholds[etype]}% (story is {'higher' if etype_story_higher[etype] else 'lower'})")
+
+    # predicting using major vote
+    correct = 0
+    total_texts = 0
+
+    for text, gold_label in test_rows:
+        doc = nlp(text)
+        token_count = len(doc)
+        total_ents = len(doc.ents)
+        votes_story = 0
+        votes_non = 0 
+
+        # entity count vote
+        if story_higher_entity_count:
+            if total_ents >= thr_entity_count:
+                votes_story += 1
+            else:
+                votes_non += 1
+        else:
+            if total_ents <= thr_entity_count:
+                votes_story +=1
+            else: votes_non += 1
+        
+        # entity type vote (has 11 votes because multiple entity types)
+        for etype in entity_types:
+            if total_ents > 0:
+                text_p = (sum(1 for e in doc.ents if e.label_ == etype) / total_ents) * 100
+            else:
+                text_p = 0
+            if etype_story_higher[etype]:
+                if text_p >= etype_thresholds[etype]:
+                    votes_story += 1
+                else:
+                    votes_non += 1
+            else:
+                if text_p <= etype_thresholds[etype]:
+                    votes_story += 1
+                else:
+                    votes_non += 1
+        
+        # chain length vote
+        if doc._.coref_chains:
+            avg_len = the_avg([len(chain) for chain in doc._.coref_chains])
+        else:
+            avg_len = 0
+        if story_higher_chain_len:
+            if avg_len >= thr_chain_len:
+                votes_story += 1
+            else:
+                votes_non += 1
+        else:
+            if avg_len <= thr_chain_len:
+                votes_story += 1
+            else:
+                votes_non += 1
+        
+        # chain per 100 tokens vote
+        if token_count > 0:
+            num_chains = len(doc._.coref_chains) if doc._.coref_chains else 0
+            rate = (num_chains / token_count) * 100
+        else:
+            rate = 0
+        if story_higher_chain_count:
+            if rate >= thr_chain_count:
+                votes_story += 1
+            else:
+                votes_non += 1
+        else:
+            if rate <= thr_chain_count:
+                votes_story += 1
+            else:
+                votes_non += 1
+
+        prediction = "story" if votes_story > votes_non else "non-story"
+        if prediction == gold_label:
+            correct += 1
+        total_texts += 1
+
+    accuracy = (correct / total_texts) * 100 if total_texts > 0 else 0
+    print("")
+    print("PREDICTION RESULTS ON TEST DATA")
+    print(f"Correct: {correct}/{total_texts}")
+    print(f"Accuracy: {accuracy}%")
+
 
 # main
 def main():
-    filepath = sys.argv[1]
-    rows = read_file(filepath)
+    dev_path = "dev_data/dev.csv"
+    test_path = sys.argv[1]
+    
+    dev_rows = read_file(dev_path)
+    test_rows = read_file(test_path)
 
-    entity_count(rows)
-    person_amount(rows) 
-    chain_lenght(rows)
-    chain_count(rows)
+    entity_count(test_rows)
+    person_amount(test_rows) 
+    chain_lenght(test_rows)
+    chain_count(test_rows)
+
+    avg_entity_story, avg_entity_non = entity_count(dev_rows)
+    ent_stats, ent_totals = person_amount(dev_rows)
+    avg_chain_len_story, avg_chain_len_non = chain_lenght(dev_rows)
+    avg_chain_count_story, avg_chain_count_non = chain_count(dev_rows)
+
+    predict(dev_rows, test_rows, ent_stats, ent_totals,
+            avg_chain_len_story, avg_chain_len_non,
+            avg_chain_count_story, avg_chain_count_non,
+            avg_entity_story, avg_entity_non)
 
 if __name__ == "__main__":
     main()
