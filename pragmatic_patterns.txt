@@ -1,53 +1,55 @@
 Pragmatic Patterns: Story vs Non-Story
 ======================================
 
-Average pragmatic feature values:
----------------------------------
-           word_count  asent_neg  asent_neu  asent_pos  asent_compound  polarity  subjectivity  emotion_per_100  temporal_per_100  stance_per_100  sentiment_shift
-label                                                                                                                                                             
-non-story  197.961749   0.051910   0.562412   0.082117        0.085086  0.093827      0.492170         0.145647          0.824465        0.417200         0.391350
-story      268.470238   0.054261   0.558300   0.079397        0.069625  0.087770      0.476215         0.193698          1.645550        0.402981         0.330984
+Development data averages
+-------------------------
+           negative_sentiment  neutral_sentiment  positive_sentiment  compound_sentiment  polarity  subjectivity  emotion_per_100  temporal_per_100  sentiment_shift
+label                                                                                                                                                               
+non-story            0.051910           0.562412            0.082117            0.085086  0.093827      0.492170         0.145647          0.824465         0.391350
+story                0.054261           0.558300            0.079397            0.069625  0.087770      0.476215         0.193698          1.645550         0.330984
 
 Basic sentiment analysis
 ------------------------
-Method: Asent and spacytextblob sentiment scores.
-Features: negative sentiment, neutral sentiment, positive sentiment, compound sentiment, polarity, and subjectivity.
-Observation: Stories had an average negative sentiment score of 0.054, while non-stories had an average score of 0.052. Stories had an average compound sentiment score of 0.070, while non-stories had an average score of 0.085. Stories had an average subjectivity score of 0.476, while non-stories had an average score of 0.492.
-Rule: Basic sentiment scores can be used as supporting evidence, but not as the main rule. If one label has clearly stronger negative, positive, compound, or subjective language, this may give weak evidence for that label.
-Explanation: Sentiment analysis is useful for detecting attitudes and opinions, but story and non-story texts can both contain emotional or subjective language. Therefore, sentiment alone is not expected to be a strong distinction.
+Method: Asent and spacytextblob sentiment analysis.
+Observation from development data:
+Stories had an average negative sentiment score of 0.054. Non-stories had an average negative sentiment score of 0.052.
+Stories had an average neutral sentiment score of 0.558. Non-stories had an average neutral sentiment score of 0.562.
+Stories had an average positive sentiment score of 0.079. Non-stories had an average positive sentiment score of 0.082.
+Stories had an average compound sentiment score of 0.070. Non-stories had an average compound sentiment score of 0.085.
+Stories had an average subjectivity score of 0.476. Non-stories had an average subjectivity score of 0.492.
+Rule: Sentiment scores were used as supporting pragmatic information, but not as the main prediction rule.
+Explanation: Sentiment is useful for pragmatics because it shows emotion, attitude, and subjectivity. However, sentiment alone does not clearly separate stories from non-stories.
 
 Pattern 1: Emotional language
 -----------------------------
 Method: Count emotion words per 100 words.
-Story average: 0.194
-Non-story average: 0.146
-Rule: If emotion_per_100 is higher than approximately 0.170, this gives evidence for story.
-Explanation: This pattern may help because stories often describe personal or emotional experiences. However, it can fail because non-stories on Reddit can also contain strong opinions, complaints, or emotional reactions.
+Story average in development data: 0.194
+Non-story average in development data: 0.146
+Rule: Emotional language was used as a supporting pattern, but it was not used for the final prediction.
+Explanation: This pattern may work because stories often describe personal or emotional experiences. It can fail because non-stories can also contain emotional opinions or complaints.
 
 Pattern 2: Temporal discourse markers
 -------------------------------------
-Method: Count temporal markers per 100 words, such as then, after, when, later, suddenly, eventually, and finally.
-Story average: 1.646
-Non-story average: 0.824
-Rule: If temporal_per_100 is higher than approximately 1.235, this gives evidence for story.
-Explanation: This pattern is useful because stories often organize events in a time sequence. It can fail when non-stories explain steps, processes, or examples in chronological order.
+Method: Count temporal markers such as then, after, when, later, and finally.
+Story average in development data: 1.646
+Non-story average in development data: 0.824
+Rule applied to test data: If temporal_per_100 is higher than 1.235, predict story. Otherwise, predict non-story.
+Test accuracy: 0.742
+Explanation: This pattern works well because stories often describe events in a time sequence. It can fail when non-stories explain steps or processes in order.
 
-Pattern 3: Personal stance markers
-----------------------------------
-Method: Count expressions per 100 words, such as I think, I feel, I believe, personally, honestly, for me, and to me.
-Story average: 0.403
-Non-story average: 0.417
-Rule: If stance_per_100 is lower than approximately 0.410, this gives evidence for story.
-Explanation: This pattern may help when stories are written as personal experiences. However, it can fail because non-stories can also include personal opinions or arguments.
-
-Pattern 4: Sentiment shift
+Pattern 3: Sentiment shift
 --------------------------
-Method: Split each text into beginning, middle, and end. Then calculate the difference between the highest and lowest compound sentiment score.
-Story average: 0.331
-Non-story average: 0.391
-Rule: If sentiment_shift is lower than approximately 0.361, this gives evidence for story.
-Explanation: This pattern may help because stories can develop emotionally from beginning to end. It can fail when a story has a stable emotional tone or when a non-story contains a strong change in opinion.
+Method: Split the text into beginning, middle, and end, then measure the change in sentiment.
+Story average in development data: 0.331
+Non-story average in development data: 0.391
+Rule: Sentiment shift was used as a supporting pattern, but it was not used for the final prediction.
+Explanation: This pattern may work because stories can develop emotionally over time. It can fail when a story has a stable tone or when a non-story changes tone strongly.
+
+Final prediction method
+-----------------------
+The final prediction uses one simple pragmatic rule: temporal discourse markers. The development data showed that stories had more temporal markers than non-stories. Therefore, the system calculated the middle point between the story average and the non-story average. Test texts above this threshold were predicted as story. Test texts below this threshold were predicted as non-story.
+Final accuracy on the test data: 0.742
 
 Conclusion
 ----------
-The basic sentiment scores were useful as a starting point, but they do not fully capture the difference between stories and non-stories. More useful pragmatic patterns come from discourse-level features: emotional language, temporal organization, personal stance, and sentiment development across the text. These features focus on how language is used to express attitudes, personal involvement, and narrative structure.
+The most useful pragmatic pattern was temporal discourse markers, because stories often describe events in chronological order. Emotional language and sentiment shift were included as supporting pragmatic observations, but they were not used for the final prediction. Basic sentiment analysis was also included because it is relevant to pragmatics, but it did not clearly separate stories from non-stories.

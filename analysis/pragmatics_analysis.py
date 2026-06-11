@@ -1,6 +1,5 @@
+import sys
 import re
-from pathlib import Path
-
 import pandas as pd
 import spacy
 import asent
@@ -9,44 +8,23 @@ from spacytextblob.spacytextblob import SpacyTextBlob
 
 # ---------------------------------------------------------
 # Pragmatic analysis: story vs non-story
-# Author: Ema Slivková
 #
-# This script analyzes pragmatic patterns in the development
-# data (dev.csv). It includes:
-# 1. basic sentiment scores (positive, neutral, negative sentiment, compound sentiment, subjectivity, polarity)
-# 2. extra pragmatic/discourse features (emotional language, temporal discourse markers, personal stance markers, sentiment shift)
-# 3. story vs non-story averages
-# 4. written rules and explanations
+# How to run from the main project folder:
+# python3 analysis/pragmatics_analysis.py dev_data/dev.csv dev_data/test.csv
+#
+# This program creates:
+# pragmatic_patterns.txt
 # ---------------------------------------------------------
 
 
-# -----------------------------
-# Load NLP pipeline
-# -----------------------------
-
-nlp = spacy.blank("en")
-nlp.add_pipe("sentencizer")
-nlp.add_pipe("asent_en_v1")
-nlp.add_pipe("spacytextblob")
+# Load spaCy and sentiment tools
+nlp = spacy.blank("en") # create a simple English spaCy pipeline
+nlp.add_pipe("sentencizer") # add sentence splitting
+nlp.add_pipe("asent_en_v1") # asent sentiment analysis
+nlp.add_pipe("spacytextblob") # textblob sentiment analysis
 
 
-# -----------------------------
-# File paths
-# -----------------------------
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-DATA_PATH = BASE_DIR / "dev_data" / "dev.csv"
-OUTPUT_PATH = BASE_DIR / "pragmatic_patterns.txt"
-SCORES_PATH = BASE_DIR / "pragmatic_scores.csv"
-
-df = pd.read_csv(DATA_PATH)
-
-
-# -----------------------------
-# Word lists to detect pragmatic patterns
-# -----------------------------
-
+# Emotion words that the program searches for
 EMOTION_WORDS = {
     "happy", "sad", "angry", "afraid", "scared", "nervous",
     "excited", "disappointed", "frustrated", "worried",
@@ -56,333 +34,301 @@ EMOTION_WORDS = {
     "joy", "fear", "anger", "sadness", "surprise"
 }
 
+
+# Temporal markers that the program searches for 
+# useful because stories often describe events in order
 TEMPORAL_MARKERS = {
     "then", "after", "before", "when", "while", "later",
     "suddenly", "eventually", "finally", "once", "meanwhile",
     "afterwards", "earlier", "yesterday", "today", "tomorrow",
-    "first", "next", "lastly", "eventually"
+    "first", "next", "lastly"
 }
 
-STANCE_MARKERS = [
-    "i think",
-    "i feel",
-    "i believe",
-    "i guess",
-    "i know",
-    "i remember",
-    "i realized",
-    "in my opinion",
-    "personally",
-    "honestly",
-    "for me",
-    "to me"
-]
-
-
-# -----------------------------
-# Section with helper functions
-# -----------------------------
 
 def tokenize(text):
-    """Split a normal sentence into a list of tokens/words that the program can count"""
+    """Split text into lowercase separate words."""
     return re.findall(r"\b[\w']+\b", str(text).lower())
+# lowercase to make the counting easier
 
 
 def count_words_per_100(tokens, word_list):
-    """Count how many words from word_list appear per 100 words.
-    This makes short and long texts easier to compare fairly
-    """
-    if len(tokens) == 0: # prevent an error (no words to count)
+    """Count words from a list per 100 words."""
+    if len(tokens) == 0:
         return 0
 
-    count = sum(1 for token in tokens if token in word_list) # counting emotion words or temporal markers
-    return (count / len(tokens)) * 100
+    count = 0
 
+    for token in tokens:
+        if token in word_list:
+            count += 1
 
-def count_phrases_per_100(text, phrase_list, word_count):
-    """Count stance markers such as 'I think' or 'in my opinion' per 100 words 
-    (so that short adn long texts can be compared fairly).
-    """
-    if word_count == 0: # prevent an error 
-        return 0
-
-    text_lower = str(text).lower() 
-    count = 0 
-
-    for phrase in phrase_list:
-        count += text_lower.count(phrase)
-
-    return (count / word_count) * 100
-
-
-def get_compound_sentiment(text):
-    """Calculate the compound sentiment score for a piece of text using Asent."""
-    doc = nlp(str(text))
-    return doc._.polarity.compound # return one overall sentiment score for the text
+    return count / len(tokens) * 100 # per 100 words makes short and long texts easier to compare fairly
 
 
 def get_sentiment_shift(text):
     """
-    Split a text into beginning, middle, and end.
-    Then calculate how much the compound sentiment changes.
-    Basically asking: Does the text change emotionally from beginning
-    to middle to end? 
-    For example, stories can have emotional movement - for example, 
-    a story can start badly, then become tense, and end positiviely. 
+    Split the text into beginning, middle, and end.
+    Then calculate how much the sentiment changes.
+    How much does the emotional tone of text change
+    from beggining to middle to end?
     """
-    doc = nlp(str(text))
-    sentences = [sent.text for sent in doc.sents] # splitting the text into sentences
+    doc = nlp(str(text)) # text is one Reddit post from the content column
+    sentences = [sent.text for sent in doc.sents] # split the text into a list of sentences
 
-    if len(sentences) < 3: # if the text has fewer than 3 sentences, the function returns 0 (it can't properly split it)
-        return 0 
+    if len(sentences) < 3:
+        return 0 # if the text has fewer than 3 sentences, do not calculate sentiment shift
 
-    third = max(1, len(sentences) // 3) # calculate how many sentence should go into each part 
+    third = len(sentences) // 3 # calculate how many sentence go into each part
 
     beginning = " ".join(sentences[:third])
     middle = " ".join(sentences[third:third * 2])
     end = " ".join(sentences[third * 2:])
 
-    scores = [
-        get_compound_sentiment(beginning),
-        get_compound_sentiment(middle),
-        get_compound_sentiment(end)
-    ]
+    beginning_score = nlp(beginning)._.polarity.compound # get the overall sentiment score from the beginning
+    middle_score = nlp(middle)._.polarity.compound
+    end_score = nlp(end)._.polarity.compound
 
-    return max(scores) - min(scores) # the difference between the highest and the lowest sentiment score
+    scores = [beginning_score, middle_score, end_score] 
+
+    return max(scores) - min(scores) # difference between the highest and lowest sentiment score
+    # how strong is the sentiment shift (high sentiment shift = emotional tone changes a lot)
 
 
-def analyze_pragmatics(text):
+def analyze_text(text):
     """
-    Extract sentiment and pragmatic/discourse features from one text.
-    The central analysis function of the script.
+    Takes one text/post and calculates all pragmatic 
+    measurements for that text
     """
-    text = str(text) 
-    tokens = tokenize(text) # use tokenize function to turn the text into separate words
-    word_count = len(tokens) # count the number of words in text
+    tokens = tokenize(text) # separate lowercase words
+    doc = nlp(str(text)) # send full text through the NLP pipeline
 
-    doc = nlp(text)
+    return pd.Series({ # return a small table row
+        # Asent sentiment scores
+        "negative_sentiment": doc._.polarity.negative, # measure how negative the text is
+        "neutral_sentiment": doc._.polarity.neutral,
+        "positive_sentiment": doc._.polarity.positive,
+        "compound_sentiment": doc._.polarity.compound, # overall sentiment score (summary)
 
-    return { # return a dictionary:
-        "word_count": word_count,
+        # spacytextblob sentiment scores
+        "polarity": doc._.blob.polarity, # whether the text is positive or negative, like the compound sentiment
+        "subjectivity": doc._.blob.subjectivity, # how opinion-based or personal the text is
 
-        # Basic sentiment scores from Asent:
-        "asent_neg": doc._.polarity.negative, # how negative the text is
-        "asent_neu": doc._.polarity.neutral, # how neutral the text is
-        "asent_pos": doc._.polarity.positive, # how positive the text is
-        "asent_compound": doc._.polarity.compound, # one overall sentiment score 
-        "polarity": doc._.blob.polarity, # polarity: whether the text is positive or negative 
-        "subjectivity": doc._.blob.subjectivity, # subjectivity: whether the text is more objective/factual or subjective/opinion-based
-
-        # Extra pragmatic/discourse features
-        "emotion_per_100": count_words_per_100(tokens, EMOTION_WORDS), # count emotion words such as happy, sad, angry, or worried, per 100 words
-        "temporal_per_100": count_words_per_100(tokens, TEMPORAL_MARKERS), # count temporal markers, such as then, later, after, or finally, per 100 words
-        "stance_per_100": count_phrases_per_100(text, STANCE_MARKERS, word_count), # count stance/opinion phrases, such as I think, personally, or in my opinion, per 100 words
-        "sentiment_shift": get_sentiment_shift(text) # measure how much the sentiment changes between the beginning, middle, and end of the text
-    }
+        # Extra pragmatic features
+        "emotion_per_100": count_words_per_100(tokens, EMOTION_WORDS), # counts how many emotion words appear per 100 words
+        "temporal_per_100": count_words_per_100(tokens, TEMPORAL_MARKERS),
+        "sentiment_shift": get_sentiment_shift(text)
+    })
 
 
-def midpoint_threshold(story_mean, nonstory_mean):
-    """Use the midpoint between story and non-story averages as a simple rule threshold."""
-    return (story_mean + nonstory_mean) / 2
+def accuracy(predictions, gold_labels):
+    """Calculate accuracy."""
+    correct = 0
+
+    for prediction, gold in zip(predictions, gold_labels): # go through predictions and real labels together
+        if prediction == gold:
+            correct += 1
+
+    return correct / len(gold_labels)
 
 
-def direction_text(story_mean, nonstory_mean):
-    """Explain whether a feature is higher or lower in stories."""
-    if story_mean > nonstory_mean:
-        return "higher"
-    elif story_mean < nonstory_mean:
-        return "lower"
-    else:
-        return "equal"
+# ---------------------------------------------------------
+# Main program
+# ---------------------------------------------------------
+
+if len(sys.argv) != 3:
+    print("Usage: python3 analysis/pragmatics_analysis.py dev_data/dev.csv dev_data/test.csv")
+    sys.exit()
+
+dev_file = sys.argv[1]
+test_file = sys.argv[2]
+
+# read both .csv files as labels:
+dev_df = pd.read_csv(dev_file) # read the development file as a table
+test_df = pd.read_csv(test_file)
 
 
-# -----------------------------
-# Run analysis
-# -----------------------------
-
-features = df["content"].apply(analyze_pragmatics)
-features_df = pd.DataFrame(list(features))
-
-df = pd.concat([df, features_df], axis=1)
+# Analyze development data
+dev_features = dev_df["content"].apply(analyze_text) # take every text in dev.csv and run analyze_text on it
+dev_df = pd.concat([dev_df, dev_features], axis=1) # add the new feature scores to the table
 
 
-# -----------------------------
-# Compare story vs non-story
-# -----------------------------
+# Analyze test data
+test_features = test_df["content"].apply(analyze_text)
+test_df = pd.concat([test_df, test_features], axis=1)
 
-all_features = [
-    "word_count",
-    "asent_neg",
-    "asent_neu",
-    "asent_pos",
-    "asent_compound",
+
+# These are the columns I want to calculate averages for: 
+features = [
+    "negative_sentiment",
+    "neutral_sentiment",
+    "positive_sentiment",
+    "compound_sentiment",
     "polarity",
     "subjectivity",
     "emotion_per_100",
     "temporal_per_100",
-    "stance_per_100",
     "sentiment_shift"
 ]
 
-comparison = df.groupby("label")[all_features].mean()
+# Create a table with the average feature values for stories and non-stories:
+averages = dev_df.groupby("label")[features].mean() 
 
-story = comparison.loc["story"]
-nonstory = comparison.loc["non-story"]
-
-
-# -----------------------------
-# Save detailed scores
-# -----------------------------
-
-df.to_csv(SCORES_PATH, index=False)
+# Separate the story row and the non-story row: 
+story = averages.loc["story"]
+nonstory = averages.loc["non-story"]
 
 
-# -----------------------------
-# Write pragmatic_patterns.txt
-# -----------------------------
+# ---------------------------------------------------------
+# Prediction rule
+# ---------------------------------------------------------
 
-with open(OUTPUT_PATH, "w", encoding="utf-8") as file:
+# The threshold is the middle between the story average and non-story average
+temporal_threshold = (story["temporal_per_100"] + nonstory["temporal_per_100"]) / 2
+
+# Predict story if the text has more temporal markers than the threshold
+predictions = []
+
+for value in test_df["temporal_per_100"]:
+    if value > temporal_threshold: # if a test has more than 1.2 temporal markers per 100 words predict story
+        predictions.append("story")
+    else:
+        predictions.append("non-story")
+
+test_df["prediction"] = predictions
+
+# Calculate accuracy
+final_accuracy = accuracy(test_df["prediction"], test_df["label"])
+
+
+# Write required output file
+with open("pragmatic_patterns.txt", "w", encoding="utf-8") as file:
     file.write("Pragmatic Patterns: Story vs Non-Story\n")
     file.write("======================================\n\n")
 
-    file.write("Average pragmatic feature values:\n")
-    file.write("---------------------------------\n")
-    file.write(comparison.to_string())
+    file.write("Development data averages\n")
+    file.write("-------------------------\n")
+    file.write(averages.to_string())
     file.write("\n\n")
 
-    # Basic sentiment section
     file.write("Basic sentiment analysis\n")
     file.write("------------------------\n")
-    file.write("Method: Asent and spacytextblob sentiment scores.\n")
+    file.write("Method: Asent and spacytextblob sentiment analysis.\n")
+    file.write("Observation from development data:\n")
+
     file.write(
-        "Features: negative sentiment, neutral sentiment, positive sentiment, "
-        "compound sentiment, polarity, and subjectivity.\n"
-    )
-    file.write(
-        f"Observation: Stories had an average negative sentiment score of "
-        f"{story['asent_neg']:.3f}, while non-stories had an average score of "
-        f"{nonstory['asent_neg']:.3f}. Stories had an average compound sentiment "
-        f"score of {story['asent_compound']:.3f}, while non-stories had an average "
-        f"score of {nonstory['asent_compound']:.3f}. Stories had an average "
-        f"subjectivity score of {story['subjectivity']:.3f}, while non-stories had "
-        f"an average score of {nonstory['subjectivity']:.3f}.\n"
-    )
-    file.write(
-        "Rule: Basic sentiment scores can be used as supporting evidence, but not "
-        "as the main rule. If one label has clearly stronger negative, positive, "
-        "compound, or subjective language, this may give weak evidence for that label.\n"
-    )
-    file.write(
-        "Explanation: Sentiment analysis is useful for detecting attitudes and opinions, "
-        "but story and non-story texts can both contain emotional or subjective language. "
-        "Therefore, sentiment alone is not expected to be a strong distinction.\n\n"
+        f"Stories had an average negative sentiment score of "
+        f"{story['negative_sentiment']:.3f}. "
+        f"Non-stories had an average negative sentiment score of "
+        f"{nonstory['negative_sentiment']:.3f}.\n"
     )
 
-    # Pattern 1
-    story_mean = story["emotion_per_100"]
-    nonstory_mean = nonstory["emotion_per_100"]
-    threshold = midpoint_threshold(story_mean, nonstory_mean)
-    direction = direction_text(story_mean, nonstory_mean)
+    file.write(
+        f"Stories had an average neutral sentiment score of "
+        f"{story['neutral_sentiment']:.3f}. "
+        f"Non-stories had an average neutral sentiment score of "
+        f"{nonstory['neutral_sentiment']:.3f}.\n"
+    )
+
+    file.write(
+        f"Stories had an average positive sentiment score of "
+        f"{story['positive_sentiment']:.3f}. "
+        f"Non-stories had an average positive sentiment score of "
+        f"{nonstory['positive_sentiment']:.3f}.\n"
+    )
+
+    file.write(
+        f"Stories had an average compound sentiment score of "
+        f"{story['compound_sentiment']:.3f}. "
+        f"Non-stories had an average compound sentiment score of "
+        f"{nonstory['compound_sentiment']:.3f}.\n"
+    )
+
+    file.write(
+        f"Stories had an average subjectivity score of "
+        f"{story['subjectivity']:.3f}. "
+        f"Non-stories had an average subjectivity score of "
+        f"{nonstory['subjectivity']:.3f}.\n"
+    )
+
+    file.write(
+        "Rule: Sentiment scores were used as supporting pragmatic information, "
+        "but not as the main prediction rule.\n"
+    )
+
+    file.write(
+        "Explanation: Sentiment is useful for pragmatics because it shows emotion, "
+        "attitude, and subjectivity. However, sentiment alone does not clearly separate "
+        "stories from non-stories.\n\n"
+    )
+
 
     file.write("Pattern 1: Emotional language\n")
     file.write("-----------------------------\n")
     file.write("Method: Count emotion words per 100 words.\n")
-    file.write(f"Story average: {story_mean:.3f}\n")
-    file.write(f"Non-story average: {nonstory_mean:.3f}\n")
+    file.write(f"Story average in development data: {story['emotion_per_100']:.3f}\n")
+    file.write(f"Non-story average in development data: {nonstory['emotion_per_100']:.3f}\n")
     file.write(
-        f"Rule: If emotion_per_100 is {direction} than approximately "
-        f"{threshold:.3f}, this gives evidence for story.\n"
+        "Rule: Emotional language was used as a supporting pattern, "
+        "but it was not used for the final prediction.\n"
     )
     file.write(
-        "Explanation: This pattern may help because stories often describe personal "
-        "or emotional experiences. However, it can fail because non-stories on Reddit "
-        "can also contain strong opinions, complaints, or emotional reactions.\n\n"
+        "Explanation: This pattern may work because stories often describe personal or emotional "
+        "experiences. It can fail because non-stories can also contain emotional opinions or complaints.\n\n"
     )
 
-    # Pattern 2
-    story_mean = story["temporal_per_100"]
-    nonstory_mean = nonstory["temporal_per_100"]
-    threshold = midpoint_threshold(story_mean, nonstory_mean)
-    direction = direction_text(story_mean, nonstory_mean)
 
     file.write("Pattern 2: Temporal discourse markers\n")
     file.write("-------------------------------------\n")
+    file.write("Method: Count temporal markers such as then, after, when, later, and finally.\n")
+    file.write(f"Story average in development data: {story['temporal_per_100']:.3f}\n")
+    file.write(f"Non-story average in development data: {nonstory['temporal_per_100']:.3f}\n")
     file.write(
-        "Method: Count temporal markers per 100 words, such as then, after, when, "
-        "later, suddenly, eventually, and finally.\n"
+        f"Rule applied to test data: If temporal_per_100 is higher than "
+        f"{temporal_threshold:.3f}, predict story. Otherwise, predict non-story.\n"
     )
-    file.write(f"Story average: {story_mean:.3f}\n")
-    file.write(f"Non-story average: {nonstory_mean:.3f}\n")
+    file.write(f"Test accuracy: {final_accuracy:.3f}\n")
     file.write(
-        f"Rule: If temporal_per_100 is {direction} than approximately "
-        f"{threshold:.3f}, this gives evidence for story.\n"
-    )
-    file.write(
-        "Explanation: This pattern is useful because stories often organize events "
-        "in a time sequence. It can fail when non-stories explain steps, processes, "
-        "or examples in chronological order.\n\n"
+        "Explanation: This pattern works well because stories often describe events in a time "
+        "sequence. It can fail when non-stories explain steps or processes in order.\n\n"
     )
 
-    # Pattern 3
-    story_mean = story["stance_per_100"]
-    nonstory_mean = nonstory["stance_per_100"]
-    threshold = midpoint_threshold(story_mean, nonstory_mean)
-    direction = direction_text(story_mean, nonstory_mean)
 
-    file.write("Pattern 3: Personal stance markers\n")
-    file.write("----------------------------------\n")
-    file.write(
-        "Method: Count expressions per 100 words, such as I think, I feel, "
-        "I believe, personally, honestly, for me, and to me.\n"
-    )
-    file.write(f"Story average: {story_mean:.3f}\n")
-    file.write(f"Non-story average: {nonstory_mean:.3f}\n")
-    file.write(
-        f"Rule: If stance_per_100 is {direction} than approximately "
-        f"{threshold:.3f}, this gives evidence for story.\n"
-    )
-    file.write(
-        "Explanation: This pattern may help when stories are written as personal "
-        "experiences. However, it can fail because non-stories can also include "
-        "personal opinions or arguments.\n\n"
-    )
-
-    # Pattern 4
-    story_mean = story["sentiment_shift"]
-    nonstory_mean = nonstory["sentiment_shift"]
-    threshold = midpoint_threshold(story_mean, nonstory_mean)
-    direction = direction_text(story_mean, nonstory_mean)
-
-    file.write("Pattern 4: Sentiment shift\n")
+    file.write("Pattern 3: Sentiment shift\n")
     file.write("--------------------------\n")
+    file.write("Method: Split the text into beginning, middle, and end, then measure the change in sentiment.\n")
+    file.write(f"Story average in development data: {story['sentiment_shift']:.3f}\n")
+    file.write(f"Non-story average in development data: {nonstory['sentiment_shift']:.3f}\n")
     file.write(
-        "Method: Split each text into beginning, middle, and end. Then calculate "
-        "the difference between the highest and lowest compound sentiment score.\n"
-    )
-    file.write(f"Story average: {story_mean:.3f}\n")
-    file.write(f"Non-story average: {nonstory_mean:.3f}\n")
-    file.write(
-        f"Rule: If sentiment_shift is {direction} than approximately "
-        f"{threshold:.3f}, this gives evidence for story.\n"
+        "Rule: Sentiment shift was used as a supporting pattern, "
+        "but it was not used for the final prediction.\n"
     )
     file.write(
-        "Explanation: This pattern may help because stories can develop emotionally "
-        "from beginning to end. It can fail when a story has a stable emotional tone "
-        "or when a non-story contains a strong change in opinion.\n\n"
+        "Explanation: This pattern may work because stories can develop emotionally over time. "
+        "It can fail when a story has a stable tone or when a non-story changes tone strongly.\n\n"
     )
+
+
+    file.write("Final prediction method\n")
+    file.write("-----------------------\n")
+    file.write(
+        "The final prediction uses one simple pragmatic rule: temporal discourse markers. "
+        "The development data showed that stories had more temporal markers than non-stories. "
+        "Therefore, the system calculated the middle point between the story average and "
+        "the non-story average. Test texts above this threshold were predicted as story. "
+        "Test texts below this threshold were predicted as non-story.\n"
+    )
+    file.write(f"Final accuracy on the test data: {final_accuracy:.3f}\n\n")
 
     file.write("Conclusion\n")
     file.write("----------\n")
     file.write(
-        "The basic sentiment scores were useful as a starting point, but they do not "
-        "fully capture the difference between stories and non-stories. More useful "
-        "pragmatic patterns come from discourse-level features: emotional language, "
-        "temporal organization, personal stance, and sentiment development across "
-        "the text. These features focus on how language is used to express attitudes, "
-        "personal involvement, and narrative structure."
+        "The most useful pragmatic pattern was temporal discourse markers, because stories "
+        "often describe events in chronological order. Emotional language and sentiment "
+        "shift were included as supporting pragmatic observations, but they were not used "
+        "for the final prediction. Basic sentiment analysis was also included because it is "
+        "relevant to pragmatics, but it did not clearly separate stories from non-stories."
     )
 
 
-print("Done.")
-print(f"Created: {OUTPUT_PATH}")
-print(f"Created: {SCORES_PATH}")
+print("Created pragmatic_patterns.txt")
+print(f"Final accuracy: {final_accuracy:.3f}")
