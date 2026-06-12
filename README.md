@@ -1,10 +1,14 @@
-# project-text-analysis-
+# project-text-analysis- group 1
 
 ## Instructions on how to run semantics.py
 To run the script on the development data run:
 python3 semantics.py dev_data/dev.csv > semantic_patterns_dev.txt
 To run the script on the test data run:
 python3 semantics.py dev_data/test.csv > semantic_patterns_test.txt
+
+Sammary Semantics (author Vera Smid):
+The sematics program looks at namend entities and chain lenghts to find patterns in the development
+data. It looks at "PERSON", "NORP", "FAC", "ORG", "GPE", "PRODUCT", "EVENT", "LANGUAGE", "DATE", "TIME", "PERCENT" to see if there is a difference in the amount of appearences between a story or non-story text. It also looks at chain lenghts and the average amount of entities in a story vs non-story text. 
 
 ## Instructions on how to run pragmatics_analysis.py 
 python3 analysis/pragmatics_analysis.py dev_data/dev.csv dev_data/test.csv
