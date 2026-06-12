@@ -8,3 +8,7 @@ python3 semantics.py dev_data/test.csv > semantic_patterns_test.txt
 
 ## Instructions on how to run pragmatics_analysis.py 
 python3 analysis/pragmatics_analysis.py dev_data/dev.csv dev_data/test.csv
+
+Summary Pragmatics (author Ema Slivkova):
+The program analyses texts from a development and test CSV to find pragmatic differences between stories and non-stories. It calculates sentiment scores, emotional words, temporal markers, and sentiment shift for each text.
+Then it uses the development data to see which patterns differ between stories and non-stories. For the final prediction, it uses one simple rule: texts with more temporal discourse markers, such as then, after, later, and finally, are predicted as stories. It then checks this rule on the test data and writes the results to pragmatic_patterns.txt.
