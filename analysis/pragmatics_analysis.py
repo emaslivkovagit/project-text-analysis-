@@ -8,6 +8,7 @@ from spacytextblob.spacytextblob import SpacyTextBlob
 
 # ---------------------------------------------------------
 # Pragmatic analysis: story vs non-story
+# Name: Ema Slivkova
 #
 # How to run from the main project folder:
 # python3 analysis/pragmatics_analysis.py dev_data/dev.csv dev_data/test.csv
