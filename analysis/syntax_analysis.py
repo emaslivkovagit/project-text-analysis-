@@ -1,4 +1,5 @@
 import csv
+import sys
 import spacy
 from collections import Counter
 
@@ -186,6 +187,8 @@ def print_rule_results(title, rule_description, correct, total, results):
     print(results)
 
 
+filename = sys.argv[1]
+
 (
     pos_by_label,
     dep_by_label,
@@ -197,7 +200,7 @@ def print_rule_results(title, rule_description, correct, total, results):
     correct_vbd_predictions,
     total_vbd_texts,
     vbd_prediction_results
-) = analyze_dataset("../dev_data/test.csv")
+) = analyze_dataset(filename)
 
 main_pos = ["PRON", "VERB", "AUX", "NOUN", "ADJ", "ADV", "PROPN"]
 main_deps = ["nsubj", "dobj", "pobj", "ROOT", "advmod", "amod", "compound", "prep"]
