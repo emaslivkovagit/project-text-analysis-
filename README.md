@@ -18,9 +18,9 @@ The program analyses texts from a development and test CSV to find pragmatic dif
 Then it uses the development data to see which patterns differ between stories and non-stories. For the final prediction, it uses one simple rule: texts with more temporal discourse markers, such as then, after, later, and finally, are predicted as stories. It then checks this rule on the test data and writes the results to pragmatic_patterns.txt.
 
 ## Instructions on how to run syntax_analysis.py
-To run  the scrip on the development data run:
+To run  the script on the development data run:
 python analysis/syntax_analysis.py dev_data/dev.csv
-To run  the scrip on the test data run:
+To run  the script on the test data run:
 python analysis/syntax_analysis.py dev_data/test.csv 
 
 Summary Syntax (author Victor Altilio):
